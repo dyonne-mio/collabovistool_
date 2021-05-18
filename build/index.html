@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>CollaboVis</title>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="./css/my.css">
+    <link rel="stylesheet" type="text/css" href="./css/all.css">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script type="text/javascript" src="js/popper.min.js"></script>
+    <script type="text/javascript" src="js/jquery-3.3.1.slim.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
+    <!-- for sweet alert boxes (replacement for norm js pop up) -->
+    <script src="sweetalert2.all.min.js"></script>
+    <script src="http://d3js.org/d3.v2.min.js?2.9.3"></script>
+    <script src="lib/browser/neo4j-web.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/promise-polyfill"></script>
+    <link rel="icon" href="https://cdn.discordapp.com/attachments/821762884668358657/836516893820452894/collabo-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="img/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <style type="text/css">
+    .ml-auto .dropdown-menu {
+        left: auto !important;
+        right: 0px;
+    }
+
+    #show-password-btn {
+        cursor: pointer;
+    }
+
+    /*fix for navbar right side dropdown*/
+    </style>
+<script defer src="app.js"></script></head>
+
+<body>
+    <div style="background-color: #0D3F72;">
+        <!-- Grid column -->
+        <div>
+            <!-- Title -->
+            <section class="col-xl-12">
+                <div>
+                </div>
+                <div>
+                    <h2 class="secondary-heading roboto text-white col-xl-3">
+                        COLLABOVIS
+                    </h2>
+                    <ul style="margin-left: 300px!important; margin-top: -45px!important;" class="nav nav-tabs md-tabs" id="myTabMD" role="tablist">
+                        <li class="nav-item waves-effect waves-light roboto col-xl-4 text-center">
+                            <a class="nav-link active" id="home-tab-md" data-toggle="tab" href="#home-md" role="tab" aria-controls="home-md" aria-selected="true">EXPLORE</a>
+                        </li>
+                        <li class="nav-item waves-effect waves-light roboto col-xl-4 text-center">
+                            <a class="nav-link" id="profile-tab-md" data-toggle="tab" href="#profile-md" role="tab" aria-controls="profile-md" aria-selected="false">DATA STORIES</a>
+                        </li>
+                        <li class="nav-item waves-effect waves-light roboto col-xl-4 text-center">
+                            <a class="nav-link" id="contact-tab-md" data-toggle="tab" href="#contact-md" role="tab" aria-controls="contact-md" aria-selected="false">ABOUT US</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content card pt-5" id="myTabContentMD">
+                        <div class="tab-pane fade show active" id="home-md" role="tabpanel" aria-labelledby="home-tab-md">
+                            <div class="row">
+                                <div class="vertical-menu col-3">
+                                    <a href="#" class="active">Authors</a>
+                                    <a href="#">Affiliations</a>
+                                    <a href="#">Communities</a>
+                                    <a href="#">Topics</a>
+                                </div>
+                                <div class="input-group rounded col-2">
+                                    <input type="search" class="form-control rounded" placeholder="Search" aria-label="Search" aria-describedby="search-addon" />
+                                    <span class="input-group-text border-0" id="search-addon" style="width: 50px; height: 40px;">
+                                        <i class="fas fa-search ml-1"></i>
+                                    </span>
+                                </div>
+                                <div class="col-7 text-center">
+                                    NEO4J
+									<div id="graph">
+									</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="profile-md" role="tabpanel" aria-labelledby="profile-tab-md">
+                            <p>Cards</p>
+                        </div>
+                        <div class="tab-pane fade" id="contact-md" role="tabpanel" aria-labelledby="contact-tab-md">
+                            <h1 class="lexenddeca text-center" style="color: #0d3f72!important; text-decoration: underline;">About the Project</h1>
+                            <div class="row">
+                                <div class="col-6">
+                                    <img class="ml-5" style="max-height: 100%!important; max-width: 100%!important; margin-left: 100px!important;" src="img/collabo-icon.png" />
+                                </div>
+                                <div class="col-5 mr-5" style="margin-top:100px!important;">
+                                    <p class="roboto-regular text-justify mr-5">
+                                        <tab>The project CollaboVis primarily focuses on understanding the relationship between the growth of research communities and the diversity of topics over time. We have collected from the Scopus database the publications of researchers of all universities in the Philippines from 1960 to 2020, create a weighted and temporal co-authorship network, and identify the communities for different time periods.
+                                    </p>
+                                </div>
+                            </div>
+                            <h1 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Meet the Team</h1>
+                            <div class="row" style="margin-left: 200px; margin-right:100px; margin-top:50px; margin-bottom: 100px;">
+                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                    <img src="img/team-member.png" class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <p class="card-text roboto-regular text-center">Jerald Ang</p>
+                                    </div>
+                                </div>
+                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                    <img src="img/team-member.png" class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <p class="card-text roboto-regular text-center">Marjorie Lua</p>
+                                    </div>
+                                </div>
+                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                    <img src="img/team-member.png" class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <p class="card-text roboto-regular text-center">Dyonne Macalino</p>
+                                    </div>
+                                </div>
+                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                    <img src="img/team-member.png" class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <p class="card-text roboto-regular text-center">Jomari Morales</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Section: Live preview -->
+        </div>
+        <!-- Grid column -->
+    </div>
+    <div class="container">
+    </div>
+    <iframe src="audio/silence.mp3" allow="autoplay" id="audio" style="display:none"></iframe>
+    <audio id="player" autoplay loop>
+        <source src="./audio/krusty_krab_remix.mp3" type="audio/mp3">
+    </audio>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
+    </script>
+    <script src="/path/to/bootstrap-show-password.js"></script>
+</body>
+<script type="text/javascript" src="./js/main.js"></script>
+<script type="text/javascript" src="./js/login.js"></script>
+
+</html>

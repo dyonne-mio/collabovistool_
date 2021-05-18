@@ -1,0 +1,325 @@
+input[type="range"]:before {
+    content: attr(min) " ";
+}
+input[type="range"]:after {
+    content: " " attr(max);
+}
+
+.form-control-borderless {
+    border: none;
+}
+
+.form-control-borderless:hover, .form-control-borderless:active, .form-control-borderless:focus {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+.slidecontainer {
+  width: 100%; /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 25px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #0d3f72; 
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #0d3f72; 
+  cursor: pointer; /* Cursor on hover */
+}
+
+
+nav > .nav.nav-tabs{
+
+  border: none;
+    color:#fff;
+    background:#272e38;
+    border-radius:0;
+
+}
+nav > div a.nav-item.nav-link,
+nav > div a.nav-item.nav-link.active
+{
+  border: none;
+    padding: 18px 25px;
+    color:#fff!important;;
+    background:#272e38;
+    border-radius:0;
+}
+
+nav > div a.nav-item.nav-link.active:after
+ {
+  content: "";
+  position: relative;
+  bottom: -60px;
+  left: -10%;
+  border: 15px solid transparent;
+  border-top-color: #0d3f72 ;
+}
+.tab-content{
+  background: #fdfdfd;
+    line-height: 25px;
+    border: 1px solid #ddd;
+    border-top:5px solid #0d3f72;
+    border-bottom:5px solid #0d3f72;
+    padding:30px 25px;
+}
+
+nav > div a.nav-item.nav-link:hover,
+nav > div a.nav-item.nav-link:focus
+{
+  border: none;
+    background: #0d3f72;
+    color:#fff;
+    border-radius:0;
+    transition:background 0.20s linear;
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+}
+
+.bg-purple {
+    background-color: #563d7c;
+}
+
+.vertical-menu {
+  width: 200px;
+  background-color: #212529;
+}
+
+.vertical-menu a {
+  background-color: #212529!important;
+  font-family: "Roboto Regular";
+  color: black;
+  display: block;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.vertical-menu a:hover {
+  background-color: #ccc!important;
+  font-family: "Roboto Regular";
+}
+
+.vertical-menu a.active {
+  background-color: #0D3F72!important;
+  color: white;
+  font-family: "Roboto Regular";
+}
+
+.border-purple {
+    border: 1px solid #563d7c;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #0d3f72!important;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.nav-tabs-2 .nav-item-2.show .nav-link-2, .nav-tabs-2 .nav-link-2.active {
+    color: #000!important;
+    background-color: #000;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.bg-aboutus{
+    background: url(../img/hero-top.jpg) no-repeat top!important;
+    background-size: contain;
+    background-color: #FFFFFF!important;
+}
+
+a {
+    color: #ffffff!important;
+    text-decoration: bold;
+    background-color: transparent;
+    -webkit-text-decoration-skip: objects;
+}
+
+.hide {
+    display: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-size: cover;
+/*    background-image: url("../img/BG.png");*/
+}
+
+.rockwell {
+    font-family: "Rockwell";
+}
+
+.cg {
+    font-family: "Century Gothic";
+}
+
+.krabbypatty {
+    font-family: "Krabby Patty";
+}
+
+.roboto {
+    font-family: "Roboto Bold";
+}
+
+.roboto-regular {
+    font-family: "Roboto Regular";
+}
+
+.lexenddeca {
+    font-family: "Lexend Deca";
+}
+
+@font-face {
+    font-family: "Century Gothic";
+    src: url("../webfonts/CenturyGothic.woff");
+}
+
+@font-face {
+    font-family: "Lexend Deca";
+    src: url("../webfonts/LexendDeca-Regular.ttf");
+}
+/*
+@font-face {
+    font-family: "Krabby Patty";
+    src: url("../webfonts/Krabby-Patty.ttf");
+}
+*/
+@font-face {
+    font-family: "Roboto Bold";
+    src: url("../webfonts/Roboto-Bold.ttf");
+}
+
+@font-face {
+    font-family: "Roboto Regular";
+    src: url("../webfonts/Roboto-Regular.ttf");
+}
+
+#login-icon {
+    background: none;
+    border: none;
+}
+
+.tab-content>.tab-pane {
+    height: 1px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+}
+
+.tab-content>.active {
+    height: auto;
+    overflow: hidden;
+    visibility: visible;
+}
+
+#nav-tab {
+    font-family: "Roboto Regular";
+}
+
+.card-header {
+    font-family: "Rockwell";
+}
+
+.card{
+  /*background-color: #c8c9f1; //#9DEAFE;
+  background-image: url("../img/counter_purple.png"); */
+}
+  
+.datepicker table tr td.active.active.focus, .datepicker table tr td.active.active:focus, .datepicker table tr td.active.active:hover, .datepicker table tr td.active.highlighted.active.focus, .datepicker table tr td.active.highlighted.active:focus, .datepicker table tr td.active.highlighted.active:hover, .datepicker table tr td.active.highlighted:active.focus, .datepicker table tr td.active.highlighted:active:focus, .datepicker table tr td.active.highlighted:active:hover, .datepicker table tr td.active:active.focus, .datepicker table tr td.active:active:focus, .datepicker table tr td.active:active:hover {
+    color: #fff!important;
+    background-color: #563d7c!important;
+    border-color: #563d7c!important;
+}
+
+.datepicker table tr td.active.active, .datepicker table tr td.active.highlighted.active, .datepicker table tr td.active.highlighted:active, .datepicker table tr td.active:active {
+    color: #fff!important;
+    background-color: #563d7c!important;
+    border-color: #563d7c!important;
+}
+
+#clear-button:hover{
+    color: #fff;
+    background-color: #dc3545!important;
+    border-color: #dc3545;
+}
+
+a {
+    color: #563d7c;
+    text-decoration: none;
+    background-color: transparent;
+}
+
+.page-item.active .page-link {
+    z-index: 1;
+    color: #fff;
+    background-color: #573e7c;
+    border-color: #563d7c;
+}
+
+.page-link {
+    position: relative;
+    display: block;
+    padding: .5rem .75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+    color: #563d7c;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    font-family: "Rockwell";
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #6F448A;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.nav-tabs-2 .nav-item-2.show .nav-link-2, .nav-tabs-2 .nav-link-2.active {
+    color: #000;
+    background-color: #0D3F72;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+#graph{
+	text-align: center;
+}
+
+#details{
+	color: white;
+	white-space: pre-line;
+}
+
+
