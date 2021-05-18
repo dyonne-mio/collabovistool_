@@ -1,9 +1,0 @@
-Source,Target
-sql1,web1  
-sql1,web2  
-sql2,web2  
-sql2,sql1  
-sql2,web3  
-web2,web3  
-web3,web2
-web3,sql2
