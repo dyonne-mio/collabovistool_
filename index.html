@@ -9,14 +9,15 @@
     <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script type="text/javascript" src="js/popper.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="js/jquery-3.3.1.slim.min.js"></script>
     <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
 	<script src="https://d3js.org/colorbrewer.v1.min.js"></script>
     <!-- for sweet alert boxes (replacement for norm js pop up) -->
     <script src="sweetalert2.all.min.js"></script>
-    <script src="http://d3js.org/d3.v2.min.js?2.9.3"></script>
+    <!--script src="http://d3js.org/d3.v2.min.js?2.9.3"></script-->
     <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom/dist/panzoom.min.js"></script>
-    <!--script src="https://d3js.org/d3.v6.js"></script-->
+    <script src="https://d3js.org/d3.v4.js"></script>
     <script src="lib/browser/neo4j-web.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/promise-polyfill"></script>
     <link rel="icon" href="https://cdn.discordapp.com/attachments/821762884668358657/836516893820452894/collabo-icon.png">
@@ -60,12 +61,29 @@
                         </li>
                     </ul>
                 </div>
-                <div class="tab-content card pt-5" id="myTabContentMD">
+                <div class="tab-content card pt-5">
                     <div class="tab-pane fade show active" id="home-md" role="tabpanel" aria-labelledby="home-tab-md">
                         <div class="sidenav mt-3" style="margin-top: 30px!important;">
                             <a id="authors-tab" href="#" class="active" >Authors</a>
                             <a id="affiliations-tab" href="#" >Affiliations</a>
-                            <a id="communities-tab" href="#">Communities</a>
+                            <a id="louvain-communities-tab" href="#">Louvain Community</a>
+                            <a id="leiden-communities-tab" href="#">Leiden Community</a>
+                            <hr>
+                            <p class="text-white mt-1 mb-1 ml-1"><b>note:</b><i> *Only top 1000 authors based on their degree centrality are displayed</i></p>
+							<hr>
+                            <div class="card text-center mt-3 ml-4 mr-3 mb-1 lexenddeca" style="background-color: #f7f7f7!important;">
+							<div class="dropdown center mb-3" style="width: 100%;">
+							  <span class="fas fa-atom" aria-hidden="true"></span><form>
+							  <select id="centrality-dropdown">
+								<option value="" selected="selected">Default</option>
+								<option value="degree_centrality">Degree Centrality</option>
+								<option value="betweenness_centrality">Betweeness Centrality</option>
+								<option value="closeness_centrality">Closeness Centrality</option>
+								<option value="eigenvector_centrality">Eigenvector Centrality</option>
+							  </select>
+							  </form>
+							</div>
+                        </div>
                             <div class="card text-center mt-3 ml-4 mr-3 mb-5">
                                 <div class="card-header roboto-regular font-weight-bold">Author Details and Network Measures</div>
                                 <div class="card-body">
@@ -90,7 +108,7 @@
                                                 </div>
                                                 <!--end of col-->
                                                 <div class="col-auto">
-                                                    <button class="btn btn-md btn-success" type="submit" style="background: #0d3f72!important;">Search</button>
+                                                    <button id="search-btn" class="btn btn-md btn-success" type="submit" style="background: #0d3f72!important;">Search</button>
                                                 </div>
                                                 <!--end of col-->
                                             </div>
@@ -129,32 +147,849 @@
                                             <a class="nav-item nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">🏫Affiliation Statistics</a>
                                         </div>
                                     </nav>
-                                    <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent">
-                                        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 5 Authors with the Most Papers</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844117787709800448/top_5_author_connections.png" class="img-responsive center mt-5" width="50%">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Authors with the Most Publications</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844108370390810635/Top_10.png" class="img-responsive center mt-5" width="50%" style="width: 50%!important;">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Authors with the Most Citations</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844116866393047060/top_10_citations.png" class="img-responsive center mt-5" width="50%">
+                                    <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent" style="overflow: auto!important;">
+                                        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" >
+                                            
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 5 Philippine Authors with the Most Papers</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/856904761106235462/legend_author1.png" class="img-responsive center mt-5" width="50%">
+                                            <div id="philippine_authors_with_most_papers" style="width: 900px; height: 300px; display: block; margin: 0 auto; margin-top:-80px!important;"></div>    
+                                            <!-- <img src="https://cdn.discordapp.com/attachments/844108116174045205/844117787709800448/top_5_author_connections.png" class="img-responsive center mt-5" width="50%"> -->
+
+                                            
+                                            <!-- <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none; margin-top:230px!important;">Top 10 Authors in the Philippines with the Most Publications</h2> -->
+                                           <!--  <div id="authors_with_most_publications" style="width: 900px; height: 300px;display: block; margin: 0 auto;"></div>   -->
+                                            <!-- <img src="https://cdn.discordapp.com/attachments/844108116174045205/844108370390810635/Top_10.png" class="img-responsive center mt-5" width="50%" style="width: 50%!important;"> -->
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none; margin-top:230px!important;">Top 10 Philippine Authors with the Most Citations</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/856906529193328680/legend_author2.png" class="img-responsive center mt-5" width="50%">
+                                            <div id="authors_with_most_citations" style="width: 900px; height: 700px; display: block; margin: 0 auto; margin-top:-105px!important;"></div> 
+
+                                            <!--<img src="https://cdn.discordapp.com/attachments/844108116174045205/844116866393047060/top_10_citations.png" class="img-responsive center mt-5" width="50%">-->
                                         </div>
-                                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Popular Publication Type</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844123837175169024/most_popular_publication_type.png" class="img-responsive center mt-5" width="50%">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Years with Most Publications</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844209900086624326/years_with_most_publications.png" class="img-responsive center mt-5" width="50%">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top Publication Venues</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844575144940535888/top_publication_venues.png" class="img-responsive center mt-5" width="50%">
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Cited Papers</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/812203751154122784/844218886056706058/most_cited_papers.png" class="img-responsive center mt-2" width="50%" style="width: 80%!important;">
+                                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" style="overflow: auto!important;">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Popular Publication Type in the Philippines</h2>
+                                            <div id="donutchart" style="width: 900px; height: 600px;display: block!important; margin: 0 auto!important;"></div>
+                                            <!--<img src="https://cdn.discordapp.com/attachments/844108116174045205/844123837175169024/most_popular_publication_type.png" class="img-responsive center mt-5" width="50%">-->
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Years with Most Publications in the Philippines</h2>
+                                            <div id="linechart_material" style="width: 900px; height: 500px;display: block!important; margin: 0 auto!important; margin-top:20px!important;"></div>
+                                            <!--<img src="https://cdn.discordapp.com/attachments/844108116174045205/844209900086624326/years_with_most_publications.png" class="img-responsive center mt-5" width="50%">-->
+                                            
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top Publication Venues in the Philippines</h2>
+                                            <div id="top_publication_venues" style="width: 1000px; height: 900px!important;display: block!important; margin: 0 auto!important; margin-top:-110px!important; margin-left: 70px!important;"></div> 
+                                          
+                                            <!--<img src="https://cdn.discordapp.com/attachments/844108116174045205/844575144940535888/top_publication_venues.png" class="img-responsive center mt-5" width="50%">-->
+                                            
+                                                 <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Cited Papers in the Philippines</h2>
+
+
+<div class="section_our_solution" style="margin-top: 60px!important;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <div class="our_solution_category">
+        <div class="solution_cards_box">
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 1</h3>
+              <h4>J.C. Zadoks, T.T. Chang, C.F. Konzak</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                A decimal code for the growth stages of cereals
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               6404
+              </p>
+            </div>
+          </div>
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 3</h3>
+              <h4>M. Naghav et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Global, regional, and national age-sex specific all-cause and cause-specific mortality for 240 causes of death, 1990-2013: A systematic analysis for the Global Burden of Disease Study 2013
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               4186
+              </p>
+            </div>
+          </div>
+        </div>
+        <!--  -->
+        <div class="solution_cards_box sol_card_top_3">
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 2</h3>
+              <h4>C. Nishida et al. </h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Appropriate body-mass index for Asian populations and its implications for policy and intervention strategies
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               6068
+              </p>
+            </div>
+          </div>
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+               <h3>Rank 4</h3>
+              <h4>T. Vos et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Global, regional, and national incidence, prevalence, and years lived with disability for 301 acute and chronic diseases and injuries in 188 countries, 1990-2013: A systematic analysis for the Global Burden of Disease Study 2013
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               3298
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="section_our_solution" style="margin-top: 60px!important;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <div class="our_solution_category">
+        <div class="solution_cards_box">
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 5</h3>
+              <h4>A.B. Haynes et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                A surgical safety checklist to reduce morbidity and mortality in a global population
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               3255
+              </p>
+            </div>
+          </div>
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 7</h3>
+              <h4>T. Vos et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Global, regional, and national incidence, prevalence, and years lived with disability for 310 diseases and injuries, 1990-2015: a systematic analysis for the Global Burden of Disease Study 2015
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               2937
+              </p>
+            </div>
+          </div>
+        </div>
+        <!--  -->
+        <div class="solution_cards_box sol_card_top_3">
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 6</h3>
+              <h4>D. Pauly et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Fishing down marine food webs
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               2960
+              </p>
+            </div>
+          </div>
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+               <h3>Rank 8</h3>
+              <h4>H. Wang et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Global, regional, and national life expectancy, all-cause mortality, and cause-specific mortality for 249 causes of death, 1980-2015
+              </p>
+              <b>Citation Count:</b>
+              <p >
+               2790
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section_our_solution" style="margin-top: 60px!important;">
+  <div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12">
+      <div class="our_solution_category">
+        <div class="solution_cards_box">
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+             <h3>Rank 9</h3>
+              <h4>International Rice Genome Sequencing Project & T. Sasaki</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                The map-based sequence of the rice genome
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               2668
+              </p>
+            </div>
+          </div>
+          <div class="solution_card" style=" opacity: 0.01!important;">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 7</h3>
+              <h4>T. Vos et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Global, regional, and national incidence, prevalence, and years lived with disability for 310 diseases and injuries, 1990-2015: a systematic analysis for the Global Burden of Disease Study 2015
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               2937
+              </p>
+            </div>
+          </div>
+        </div>
+        <!--  -->
+        <div class="solution_cards_box sol_card_top_3">
+          <div class="solution_card">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+              <h3>Rank 10</h3>
+              <h4>T. M. Teslovich et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Biological, clinical and population relevance of 95 loci for blood lipids
+              </p>
+              <b>Citation Count:</b>
+              <p>
+               2441
+              </p>
+            </div>
+          </div>
+          <div class="solution_card" style=" opacity: 0.01!important;">
+            <div class="hover_color_bubble"></div>
+            <div class="so_top_icon">
+              <svg id="Layer_1" enable-background="new 0 0 512 512" height="50" viewBox="0 0 512 512" width="40" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <g>
+                    <g>
+                      <g>
+                        <path d="m47.478 452.317 295.441 19.76c5.511.369 10.277-3.8 10.645-9.31l28.393-424.517c.369-5.511-3.8-10.276-9.31-10.645l-295.441-19.76c-5.511-.369-10.276 3.8-10.645 9.31l-28.394 424.517c-.368 5.511 3.8 10.277 9.311 10.645z" fill="#fae19e" />
+                      </g>
+                      <g>
+                        <g>
+                          <g>
+                            <g>
+                              <g>
+                                <path d="m17.5 504.177h226.14l79.96-79.605v-355.86c0-5.523-4.477-10-10-10h-296.1c-5.523 0-10 4.477-10 10v425.466c0 5.522 4.477 9.999 10 9.999z" fill="#fff9e9" />
+                              </g>
+                              <path d="m313.601 58.712h-40c5.523 0 10 4.477 10 10v355.861l-.258 40.078 40.258-40.078v-355.861c0-5.523-4.477-10-10-10z" fill="#fff4d6" />
+                            </g>
+                          </g>
+                        </g>
+                        <path d="m243.64 504.177v-70.253c0-5.523 4.477-10 10-10h69.96z" fill="#ffeec2" />
+                      </g>
+                    </g>
+                    <g>
+                      <path d="m468.636 248.58-33.372.165v-50.826c0-9.183 7.463-16.662 16.673-16.708h.007c9.217-.046 16.693 7.371 16.693 16.562v50.807z" fill="#fed23a" />
+                      <path d="m451.96 504.177c-10.362-10.277-16.196-24.263-16.208-38.857l-.062-73.973c0-.644.524-1.169 1.171-1.173l30.038-.149c.647-.003 1.171.517 1.171 1.161l.062 74.079c.012 14.531-5.749 28.472-16.015 38.756z" fill="#54b1ff" />
+                      <path d="m451.959 469.333h-.01c-14.434.072-26.14-11.542-26.14-25.935v-213.527c0-6.778 5.477-12.283 12.255-12.316l27.626-.137c6.826-.034 12.378 5.49 12.378 12.316v213.436c0 14.38-11.687 26.091-26.109 26.163z" fill="#fdf385" />
+                      <path d="m465.69 217.417-23.769.118c6.037.79 10.708 5.94 10.708 12.198v213.437c0 9.823-5.455 18.397-13.507 22.87 3.79 2.115 8.164 3.317 12.826 3.293h.01c14.422-.072 26.109-11.783 26.109-26.163v-213.436c.001-6.826-5.551-12.351-12.377-12.317z" fill="#faee6e" />
+                      <path d="m491.274 247.925-71.615.355c-7.305.036-13.226 5.968-13.226 13.248 0 7.281 5.921 13.153 13.226 13.117l58.389-.29v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c0-7.28-5.922-13.152-13.226-13.116z" fill="#54b1ff" />
+                      <g>
+                        <path d="m491.274 247.925-38.441.188-.167 26.311 25.381-.067v77.489c0 7.281 5.921 13.153 13.226 13.117 7.305-.036 13.226-5.968 13.226-13.248v-90.672c.001-7.282-5.921-13.154-13.225-13.118z" fill="#3da7ff" />
+                      </g>
+                    </g>
+                  </g>
+                  <g fill="#060606">
+                    <path d="m373.147 20.122-295.44-19.761c-9.631-.638-17.984 6.665-18.629 16.293l-2.311 34.557h-39.267c-9.649 0-17.5 7.851-17.5 17.5v425.466c0 9.649 7.851 17.5 17.5 17.5h226.141c1.96 0 3.902-.801 5.292-2.185l34.138-33.987c.347.074.701.133 1.065.157l58.282 3.898c9.302.614 18.005-6.952 18.629-16.293l28.393-424.515c.639-9.528-6.766-17.993-16.293-18.63zm-122.006 465.902v-52.1c0-1.378 1.122-2.5 2.5-2.5h51.9zm94.939-23.757c-.244 1.51-1.131 2.286-2.66 2.327l-46.28-3.096 31.752-31.611c1.414-1.407 2.209-3.32 2.209-5.315v-355.86c0-9.649-7.851-17.5-17.5-17.5h-77.993c-9.697 0-9.697 15 0 15h77.993c1.379 0 2.5 1.122 2.5 2.5v347.712h-62.46c-9.649 0-17.5 7.851-17.5 17.5v62.753h-218.641c-1.378 0-2.5-1.122-2.5-2.5v-425.465c0-1.378 1.122-2.5 2.5-2.5h178.168c9.697 0 9.697-15 0-15h-123.868l2.244-33.556c.244-1.511 1.131-2.286 2.661-2.327l295.44 19.76c1.511.244 2.287 1.131 2.328 2.661z" />
+                    <path d="m267.827 237.047h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m267.827 289.332h-204.553c-4.142 0-7.5 3.358-7.5 7.5s3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5z" />
+                    <path d="m55.774 192.262c0 4.142 3.358 7.5 7.5 7.5h204.553c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-204.553c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m91.807 139.977c0 4.142 3.358 7.5 7.5 7.5h132.487c4.142 0 7.5-3.358 7.5-7.5s-3.358-7.5-7.5-7.5h-132.487c-4.142 0-7.5 3.358-7.5 7.5z" />
+                    <path d="m194.755 438.787c-13.489.036-26.978.065-40.467.086-4.534.007-9.067.013-13.6.016-8.215.006-13.75-1.643-15.59-10.679-1.556-7.64-12.364-6.613-14.464 0-5.19 16.337-13.774 9.936-18.582-1.053-4.797-10.963-6.027-23.233-8.122-34.9-1.54-8.573-14.506-6.17-14.732 1.994-.298 10.751-1.302 21.331-4.031 31.758-2.815 10.758-7.034 21.097-11.222 31.376-3.651 8.961 10.867 12.816 14.464 3.988 3.711-9.108 7.427-18.266 10.193-27.714 5.14 12.36 15.774 26.34 30.927 18.101 2.819-1.533 5.452-3.712 7.763-6.253 7.88 9.106 19.609 8.388 30.584 8.375 15.627-.02 31.254-.054 46.881-.095 9.649-.025 9.667-15.025-.002-15z" />
+                    <path d="m505.932 246.439c-3.897-3.878-9.255-5.867-14.695-6.014l-5.668.028v-10.719c0-6.529-3.878-13.427-9.433-16.862v-15.098c0-31.069-48.372-30.934-48.372.146v15.1c-5.659 3.498-9.455 9.741-9.455 16.852v10.982c-24.966 1.7-25.037 39.745.028 41.232.16 33.575.152 66.6-.028 100.737-.049 9.414 14.949 9.966 15 .079.18-34.166.188-67.22.029-100.823l37.211-.185s-.048 110.848-.048 160.784c0 24.338-37.219 24.5-37.219-.253l.013-13.677c.585-9.68-14.387-10.583-14.973-.904v12.834c0 11 3.402 20.316 9.988 26.869.586 15.693 7.198 30.878 18.369 41.956 3.205 3.18 7.642 2.208 10.744-.182 11.365-11.385 17.769-26.394 18.169-42.414 4.951-4.931 9.908-9.896 9.908-26.896l.006-68.351c12.97 3.689 26.494-6.348 26.494-19.946v-90.672c0-5.523-2.155-10.709-6.068-14.603zm-72.623-5.727v-10.841c0-2.219 1.523-4.08 3.573-4.633l30.025-.149c.84.208 1.615.605 2.243 1.231.915.911 1.419 2.123 1.419 3.414v10.794zm18.671-52c4.604 0 9.155 4.514 9.155 9.062v12.166l-18.372.091v-12.111c.001-5.053 4.133-9.183 9.217-9.208zm-.011 303.901c-3.487-4.942-6.009-10.531-7.417-16.406 2.322.503 4.674.765 7.027.765 2.627 0 5.253-.326 7.839-.957-1.374 5.964-3.892 11.587-7.449 16.598zm45.031-140.899c0 7.101-11.452 7.66-11.452.131 0 0 .013-70.974.021-77.48.005-4.196-3.483-7.509-7.558-7.509l-58.389.29c-7.242 0-7.073-11.331.074-11.366l71.615-.355c3.463.295 5.359 2.168 5.688 5.617v90.672z" />
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <div class="solu_title">
+               <h3>Rank 8</h3>
+              <h4>H. Wang et al.</h4>
+            </div>
+            <div class="solu_description">
+                <b>Title:</b>
+              <p>
+                Global, regional, and national life expectancy, all-cause mortality, and cause-specific mortality for 249 causes of death, 1980-2015
+              </p>
+              <b>Citation Count:</b>
+              <p >
+               2790
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+                                                
+                                                 <div hidden id="most_cited_papers" style="width: 900px; height: 600px; display: block; margin: 0 auto;"></div> 
+
+                                          
+                                            <!--<img src="https://cdn.discordapp.com/attachments/812203751154122784/844218886056706058/most_cited_papers.png" class="img-responsive center mt-2" width="50%" style="width: 80%!important;">-->
                                         </div>
                                         <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
                                             
                                             <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Number of Authors in Philippine University Affiliations </h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844577241337036810/most_number_authors_in_ph_affil.png" class="img-responsive center mt-2" width="50%" style="width: 80%!important;">
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/856920184849170432/legend_affil1.png" class="img-responsive center mt-5" width="50%" style="margin-left: 170px!important;">
+                                            <div id="most_number_authors_in_ph_affil" style="width: 900px; height: 550px; display: block; margin: 0 auto; margin-top:-110px!important; margin-left: 70px!important; margin-bottom:50px!important;"></div> 
+                                            <!--<img src="https://cdn.discordapp.com/attachments/844108116174045205/844577241337036810/most_number_authors_in_ph_affil.png" class="img-responsive center mt-2" width="50%" style="width: 80%!important;">-->
 
-                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Philippine University Affiliations Based on Published Papers</h2>
-                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844577422401601606/top_10_ph_affil.png" class="img-responsive center mt-5" width="50%">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none; margin-top:150px!important;">Top 10 Philippine University Affiliations Based on <br> Published Papers</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/856917073682235433/legend_affil2.png" class="img-responsive center mt-5" width="50%" style="margin-left: 170px!important;">
+                                            <div id="custom_html_content_div" style="width: 900px; height: 750px; display: block; margin: 0 auto; margin-top:-30px!important; margin-left: 100px!important;"></div>
+
+                                            <!--<div id="top_10_ph_affil" style="width: 1000px; height: 750px; display: block; margin: 0 auto; margin-top:-110px!important; margin-left: 70px!important;"></div> 
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844577422401601606/top_10_ph_affil.png" class="img-responsive center mt-5" width="50%">-->
                                         </div>
                                     </div>
                                 </div>
@@ -243,7 +1078,490 @@ svg {
 <script type="text/javascript" src="./js/main.js"></script>
 <script type="text/javascript" src="./js/login.js"></script>
 <script type="text/javascript" src="./js/neo4j-web.min.js"></script>
-<script type="text/javascript">
-    
+
+  <script type="text/javascript">
+    google.charts.load("current", {packages:['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+    google.charts.load('current', {'packages':['line']});
+    google.charts.setOnLoadCallback(drawChart);
+    function drawChart() {
+      var dataTop5PHAuthors = google.visualization.arrayToDataTable([
+        ["Author", "Papers", { role: "style" } ],
+        ["Raymond R. Tan " + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" + " \r\n (DLSU)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 395, "#006937"],
+        ["J. Theo Kloprogge "  + "\u00A0\u00A0\u00A0\u00A0\u00A0 ‎"+  "\r\n (UP)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" , 278, "#760d11"],
+        ["Ruji P. Medina"  + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎"+  " \r\n (TIP)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" , 199, "#fae806"],
+        ["Silvia Borghi " + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" + "\r\n (WFC)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" , 171, "#174986"],
+        ["Pierre Billoir"  + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎"+  " \r\n (MSU)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" , 171, "#f7d953"]
+      ]);
+
+      var view = new google.visualization.DataView(dataTop5PHAuthors);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+
+      var options = {
+        title: "Top 5 Philippine Authors with the Most Papers",
+        width: 900,
+        height: 500,
+        backgroundColor: 'transparent',
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+        bar: {groupWidth: "95%"},
+        titlePosition: 'none',
+        legend: { position: "none" },
+      };
+      var chartTop5PHAuthors = new google.visualization.BarChart(document.getElementById("philippine_authors_with_most_papers"));
+      chartTop5PHAuthors.draw(view, options);
+
+/*
+      var dataTop10PHAuthorsMostPublications = google.visualization.arrayToDataTable([
+        ["Author", "Document Count", { role: "style" } ],
+        ["Markus Wolfgang Bächler  \r\n (UST)", 2325, "#ffc00f"],
+        ["Yehuda Shoenfeld \r\n (SEAFDEC/AQD)", 2221, "#3c92b3"],
+        ["Richard D. Kass \r\n (DLSU)", 2035, "#006937"],
+        ["Arie Bodek \r\n (UST)", 1965, "color: #ffc00f"],
+        ["Howard I. Maibach \r\n (PHilMech)", 1954, "color: #ef9c21"],
+        ["Harris P. Kagan \r\n (UP)", 1943, "color: #760d11"],
+        ["Hans Christoph W. Diener \r\n (UP)", 1869, "#760d11"],
+        ["Pierre Billoir \r\n (MSU)", 1808, "#f7d953"],
+        ["Richard L. Lander \r\n (IRRI)", 1704, "#038542"],
+        ["Nicholas G. Martin \r\n (UP)", 1690, "#760d11"]
+      ]);
+
+      var view = new google.visualization.DataView(dataTop10PHAuthorsMostPublications);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Top 10 Authors with the Most Publications",
+        width: 900,
+        height: 500,
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+        bar: {groupWidth: "95%"},
+        titlePosition: 'none',
+        legend: { position: "none" },
+      };
+      var chartTop10PHAuthorsMostPublications = new google.visualization.BarChart(document.getElementById("authors_with_most_publications"));
+      chartTop10PHAuthorsMostPublications.draw(view, options);
+*/
+      var dataTop10PHAuthorsMostCitations = google.visualization.arrayToDataTable([
+        ["Author", "Citation Count", { role: "style" } ],
+        ["Raymond R. Tan  " + "\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" + " \r\n (DLSU)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 8055, "#006937"],
+        ["Joselito M. Razal" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎" + " \r\n (ADMU)" + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 7195, "color: #153d95"],
+        ["Teodorica Bugawan " + " ‎ ‎ ‎ ‎ ‎ ‎" + "\r\n (ISD)" + "\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 7136, "#c9ad80"],
+        ["Corazon Ngelangel " + " ‎ ‎ ‎ ‎ ‎ ‎" + "\r\n (PSMO)" + "\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 7024, "color: #ed4a38"],
+        ["Maricar S. Prudente " + " ‎ ‎ ‎ ‎ ‎ ‎" + " \r\n (DLSU)" + "\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 3620, "color: #006937"],
+        ["Porfirio Alino " + "\u00A0\u00A0\u00A0\u00A0 ‎" + "\r\n (UP)"+ "\u00A0\u00A0\u00A0\u00A0\u00A0 ‎", 2075, "#760d11"],
+        ["Consolacion Ragasa " + " ‎ ‎ ‎ ‎ ‎" + "\r\n (DLSU)" + "\u00A0\u00A0\u00A0\u00A0 ‎", 1952, "#006937"],
+        ["Charles Yuji Horioka " + " ‎ ‎ ‎ ‎ ‎" + " \r\n (UP)"+ "\u00A0\u00A0\u00A0\u00A0 ‎", 1952, "#760d11"],
+        ["Caesar A. Saloma " + " ‎ ‎ ‎ ‎ ‎" + " \r\n (UP)"+ "\u00A0\u00A0\u00A0\u00A0 ‎", 1474, "#760d11"],
+        ["Custer C. Deocaris  " + " ‎ ‎ ‎ ‎ ‎" + "\r\n (TIP)"+ "\u00A0\u00A0\u00A0\u00A0 ‎", 1223, "#fae806"]
+      ]);
+
+      var view = new google.visualization.DataView(dataTop10PHAuthorsMostCitations);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Top 10 Authors with the Most Citations",
+        width: 900,
+        height: 800,
+        bar: {groupWidth: "95%"},
+        backgroundColor: 'transparent',
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+        titlePosition: 'none',
+        legend: { position: "none" },
+      };
+      var chartTop10PHAuthorsMostCitations = new google.visualization.BarChart(document.getElementById("authors_with_most_citations"));
+      chartTop10PHAuthorsMostCitations.draw(view, options);
+
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChartPublicationType);
+      function drawChartPublicationType() {
+        var dataPublicationType = google.visualization.arrayToDataTable([
+          ['Paper Publication Type', 'No. of Paper Types'],
+          ['Journal',     71634],
+          ['Book Series', 3342],
+          ['Conference Proceeding',  19560],
+          ['Report', 1],
+          ['Book',    2423],
+          ['Trade Journal', 112]
+        ]);
+
+        var optionsPublicationType = {
+          title: 'Most Popular Publication Type',
+          titlePosition: 'none',
+          colors: ['#00495c', '#efc94e', '#cb453a', '#6eb559', '#8966aa', '#daab15'],
+          pieHole: 0.4,
+        };
+
+        var chartPublicationType = new google.visualization.PieChart(document.getElementById('donutchart'));
+        chartPublicationType.draw(dataPublicationType, optionsPublicationType);
+      }
+
+    google.charts.load('current', {'packages':['line']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('number', 'Year');
+      data.addColumn('number', 'Papers');
+
+      data.addRows([
+        [1960,  17],
+        [1961,  16],
+        [1962,  17],
+        [1963,  14],
+        [1964,  37],
+        [1965,  35],
+        [1966,  36],
+        [1967,  30],
+        [1968,  39],
+        [1969,  43],
+        [1970,  49],
+        [1971,  39],
+        [1972,  50],
+        [1973,  195],
+        [1974,  223],
+        [1975,  187],
+        [1976,  182],
+        [1977,  156],
+        [1978,  201],
+        [1979,  243],
+        [1980,  208],
+        [1981,  280],
+        [1982,  296],
+        [1983,  264],
+        [1984,  308],
+        [1985,  318],
+        [1986,  324],
+        [1987,  373],
+        [1988,  457],
+        [1989,  480],
+        [1990,  544],
+        [1991,  454],
+        [1992,  511],
+        [1993,  518],
+        [1994,  483],
+        [1995,  609],
+        [1996,  810],
+        [1997,  937],
+        [1998,  880],
+        [1999,  1045],
+        [2000,  1129],
+        [2001,  128],
+        [2002,  195],
+        [2003,  482],
+        [2004,  1130],
+        [2005,  1627],
+        [2006,  1559],
+        [2007,  1844],
+        [2008,  1918],
+        [2009,  2218],
+        [2010,  2298],
+        [2011,  2926],
+        [2012,  3157],
+        [2013,  3685],
+        [2014,  4557],
+        [2015,  6330],
+        [2016,  7280],
+        [2017,  8747],
+        [2018,  8980],
+        [2019,  14173],
+        [2020,  10664]
+      ]);
+
+      var options = {
+        chart: {
+          title: 'Years with Most Publications',
+          subtitle: 'from 1960-2020'
+        },
+        width: 900,
+        height: 500,
+        vAxis: {format: ' '},
+        hAxis: {format: ' '},
+        colors: ['#00495c'],
+        axes: {
+          x: {
+            0: {side: 'bottom'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Line(document.getElementById('linechart_material'));
+
+      chart.draw(data, google.charts.Line.convertOptions(options));
+
+
+      var dataTopPublicationVenues = google.visualization.arrayToDataTable([
+        ["Publication Venue", "Document Count",{ role: "style" }],
+        ["Philippine Journal of "+ "\u00A0\u00A0\u00A0 ‎" +" Internal Medicine " + "\u00A0\u00A0\u00A0\u00A0 ‎", 644, "color: #009bc4"],
+        ["Acta Medica "+ " ‎ ‎ ‎ ‎ ‎\r\n ‎" + "Philippina"+ "\u00A0\u00A0\u00A0\u00A0 ‎", 596, "#cb453a"],
+        ["Philippine Agricultural "+ " ‎ ‎ ‎\r\n ‎" + "Scientist" + "\u00A0\u00A0\u00A0\u00A0 ‎", 518, "#00495c"],
+        ["ACM International"+ " ‎ ‎ ‎ ‎ ‎\r\n" + " CPS"+ " ‎ ‎ ‎ ‎ ‎", 496, "color: #6eb559"],
+        ["Philippine Journal of"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎" +"Science" + "\u00A0\u00A0\u00A0\u00A0 ‎", 475, "#efc94e"],
+        ["IEEE Region 10 "+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎" +"Conference"+ "\u00A0\u00A0 ‎ ‎ ‎", 419, "color: #8966aa"],
+        ["Field Crops "+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎" +"Research"+ "\u00A0\u00A0 ‎ ‎ ‎ ‎", 337, "#9a3229"],
+        ["PLoS ONE"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 297, "#daab15"],
+        ["Acta Horticulturae"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 256, "#4f8c3e"],
+        ["AIP Conference "+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎" +"Proceedings"+ "\u00A0\u00A0 ‎ ‎ ‎ ‎", 238, "#674a84"]
+      ]);
+
+      var view = new google.visualization.DataView(dataTopPublicationVenues);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Top Publication Venues in the Philippines",
+        width: 1000,
+        height: 900,
+        bar: {groupWidth: "95%"},
+        titlePosition: 'none',
+        backgroundColor: 'transparent',
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+        hAxis: {format: ' '},
+        legend: { position: "none" },
+      };
+      var chartTopPublicationVenues = new google.visualization.BarChart(document.getElementById("top_publication_venues"));
+      chartTopPublicationVenues.draw(view, options);
+
+
+      var dataMostCitedPapers = google.visualization.arrayToDataTable([
+        ["Paper Title", "No. of Citations", { role: "style" } ],
+        ["A decimal code for the growth stages of cereals", 6404, "#cb453a"],
+        ["Appropriate body-mass index for Asian populations and its implications for policy and intervention strategies", 6068, "#00495c"],
+        ["Global, regional, and national age-sex specific all-cause and cause-specific mortality for 240 causes of death, 1990-2013: A systematic analysis for the Global Burden of Disease Study 2013", 4186, "#efc94e"],
+        ["Global, regional, and national incidence, prevalence, and years lived with disability for 301 acute and chronic diseases and injuries in 188 countries, 1990-2013: A systematic analysis for the Global Burden of Disease Study 2013", 3298, "color: #6eb559"],
+        ["A surgical safety checklist to reduce morbidity and mortality in a global population", 3255, "color: #8966aa"],
+        ["Fishing down marine food webs", 2960, "color: #009bc4"],
+        ["Global, regional, and national incidence, prevalence, and years lived with disability for 310 diseases and injuries, 1990-2015: a systematic analysis for the Global Burden of Disease Study 2015", 2937, "#9a3229"],
+        ["Global, regional, and national life expectancy, all-cause mortality, and cause-specific mortality for 249 causes of death, 1980-2015: a systematic analysis for the Global Burden of Disease Study 2015", 2790, "#daab15"],
+        ["The map-based sequence of the rice genome", 2668, "#4f8c3e"],
+        ["Biological, clinical and population relevance of 95 loci for blood lipids", 2441, "#674a84"]
+      ]);
+
+      var view = new google.visualization.DataView(dataMostCitedPapers);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Most Cited Papers in the Philippines",
+        width: 900,
+        height: 500,
+        bar: {groupWidth: "95%"},
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+        titlePosition: 'none',
+        legend: { position: "none" },
+      };
+      var chartMostCitedPapers = new google.visualization.ColumnChart(document.getElementById("most_cited_papers"));
+      chartMostCitedPapers.draw(view, options);
+     
+      var dataMostCitedAuthorsPHAffil = google.visualization.arrayToDataTable([
+        ["University Affiliation Name", "No. of Authors", { role: "style" } ],
+        ["UP Diliman"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 4170, "#760d11"],
+        ["DLSU Manila"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 2992, "#006937"],
+        ["UP Manila"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 2417, "#760d11"],
+        ["UP Los Baños"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 2319, "color: #760d11"],
+        ["Mapúa University"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 2313, "color: #cc0000"],
+        ["UST Manila"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 2153, "color: #ffc00f"],
+        ["IRRI"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 1401, "#038542"],
+        ["ADMU"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 1114, "#153d95"],
+        ["MSU Iligan Institute"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎\r\n" + " of Technology"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 710, "#f7d953"],
+        ["UP System"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", 687, "#760d11"]
+      ]);
+
+      var view = new google.visualization.DataView(dataMostCitedAuthorsPHAffil);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Most Number of Authors in Philippine University Affiliations",
+        width: 1000,
+        height: 700,
+        bar: {groupWidth: "95%"},
+        titlePosition: 'none',
+        backgroundColor: 'transparent',
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+        hAxis: {format: ' '},
+        legend: { position: "none" },
+      };
+      var chartAuthorsPHAffil = new google.visualization.BarChart(document.getElementById("most_number_authors_in_ph_affil"));
+      chartAuthorsPHAffil.draw(view, options);
+
+      /*
+      var dataTopPHAffil = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Rank');
+        // A column for custom tooltip content
+        dataTable.addColumn({type: 'string', role: 'tooltip'});
+        dataTable.addColumn('number', 'No. of Papers');
+        dataTable.addColumn({type: 'string', role: 'style'});
+        dataTable.addRows([
+        ["1", "University of the Philippines Diliman", 8195, "color: #cb453a"],
+        ["2", "International Rice Research Institute", 5893, "color: #00495c"],
+        ["3", "University of the Philippines Los Baños", 4538, "color: #8966aa"],
+        ["4", "University of the Philippines Manila", 4087, "color: #efc94e"],
+        ["5", "De La Salle University-Manila", 3751, "color: #6eb559"],
+        ["6", "University of Santo Tomas, Manila", 2324, "color: #009bc4"],
+        ["7", "Ateneo de Manila University", 2146, "color: #9a3229"],
+        ["8", "Mapúa University", 1513, "color: #daab15"],
+        ["9", "University of the Philippines System", 1478, "color: #4f8c3e"],
+        ["10", "MSU-Iligan Institute of Technology", 1320, "color: #674a84"]
+      ]);
+
+
+      var dataTop10PHAffil = google.visualization.arrayToDataTable([
+        ["Publication Venue", "Papers",{ role: "style" }, {type: 'string', role: 'tooltip'} ],
+        ["University of the Philippines Diliman", 12755, "#cb453a", 'UP Diliman'],
+        ["International Rice Research Institute", 10008, "#00495c", 'UP Diliman'],
+        ["De La Salle University-Manila", 9829, "color: #6eb559", 'UP Diliman'],
+        ["University of the Philippines Los Banos", 6313, "#efc94e", 'UP Diliman'],
+        ["University of the Philippines Manila", 5866, "color: #8966aa", 'UP Diliman'],
+        ["Mapúa University", 4013, "color: #009bc4", 'UP Diliman'],
+        ["University of Santo Tomas, Manila", 3695, "#9a3229", 'UP Diliman'],
+        ["Ateneo de Manila University", 2969, "#daab15", 'UP Diliman'],
+        ["MSU-Iligan Institute of Technology", 1736, "#4f8c3e", 'UP Diliman'],
+        ["University of the Philippines System", 1473, "#674a84", 'UP Diliman']
+      ]);
+
+      var view = new google.visualization.DataView(dataTop10PHAffil);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Top 10 Philippine University Affiliations Based on Published Papers",
+        width: 1000,
+        height: 700,
+        bar: {groupWidth: "85%"},
+        titlePosition: 'none',
+        backgroundColor: 'transparent',
+        vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+         hAxis: {
+          format: ' '
+        },
+        tooltip: {isHtml: true},
+        legend: { position: "none" },
+      };
+      var chartTop10PHAffil = new google.visualization.BarChart(document.getElementById("top_10_ph_affil"));
+      chartTop10PHAffil.draw(view, options);*/
+    }
+  }
+
+google.charts.setOnLoadCallback(drawTop10PHAffil);
+  function drawTop10PHAffil() {
+  var dataTable = new google.visualization.DataTable();
+  dataTable.addColumn('string', 'University Affiliation Name');
+  // Use custom HTML content for the domain tooltip.
+  dataTable.addColumn({'type': 'string', 'role': 'tooltip', 'p': {'html': true}});
+  dataTable.addColumn('number', 'Papers');
+  dataTable.addColumn({'role': 'style'});
+
+  dataTable.addRows([
+    ["UP Diliman"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/3/3d/University_of_The_Philippines_seal.svg', 8195), 8195, "color: #760d11"],
+    ["IRRI"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/commons/0/05/IRRI_wordmark_logo.svg',  5893), 5893, "color: #038542"],
+    ["UP Los Baños"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/3/3d/University_of_The_Philippines_seal.svg',  4538), 4538, "color: #760d11"],
+    ["UP Manila"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/3/3d/University_of_the_Philippines_Manila_Seal.svg',  4087), 4087, "color: #760d11"],
+    ["DLSU Manila"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/c/c2/De_La_Salle_University_Seal.svg',  3751), 3751, "color: #006937"],
+    ["UST Manila"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/2/24/Seal_of_the_University_of_Santo_Tomas.svg',  2324), 2324, "color: #ffc00f"],
+    ["ADMU"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/6/6c/Ateneo_de_Manila_University_seal.svg',  2146), 2146, "color: #153d95"],
+    ["Mapúa University"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/commons/e/e5/Map%C3%BAa_University_logo_red_text.svg',  1513), 1513, "color: #cc0000"],
+    ["UP System"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://upload.wikimedia.org/wikipedia/en/3/3d/University_of_The_Philippines_seal.svg',  1478), 1478, "color: #760d11"],
+    ["MSU Iligan Institute"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎\r\n" + " of Technology"+ "\u00A0\u00A0\u00A0 ‎ ‎ ‎", createCustomHTMLContent('https://cdn.discordapp.com/attachments/844108116174045205/856552907707777064/MSU_2018_10_25_10_31_04.jpg',  1320), 1320, "color: #f7d953"]
+  ]);
+
+  var options = {
+    title: 'Philippine University Affiliations',
+    colors: ['#cb453a', '#00495c', '#8966aa'],
+    width: 1000,
+        height: 700,
+    backgroundColor: 'transparent',
+    vAxis: {
+            format: ' ',
+            textStyle: {
+                bold:'true',
+              }
+        },
+    // This line makes the entire category's tooltip active.
+    focusTarget: 'category',
+    legend: { position: "none" },
+    // Use an HTML tooltip.
+    tooltip: { isHtml: true }
+  };
+
+  // Create and draw the visualization.
+  new google.visualization.BarChart(document.getElementById('custom_html_content_div')).draw(dataTable, options);
+}
+
+function createCustomHTMLContent(flagURL, totalGold) {
+  return '<div style="padding:5px 5px 5px 5px;">' +
+      '<img src="' + flagURL + '" style="width:75px;height:50px"><br/>' +
+      '<table class="medals_layout">' + '<tr>' +
+      '<td><img src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Ei-paperclip.svg" style="width:25px;height:25px"/></td>' +
+      '<td><b>' + totalGold + '</b></td>' + '</table>' + '</div>';
+}
+  </script>
+
 </script>
 </html>

@@ -20,9 +20,9 @@ const driver = neo4j.driver(
 
 console.log(`Database running at ${neo4jUri}`)
 
-function searchYear(queryYear) {
+function search(queryString, queryYear, centralityLimit) {
 	cypher_string = 'MATCH (a1:Author)-[r:COAUTHORED_WITH]->(a2:Author) \
-	WHERE r.year <= "' + queryYear + '"\
+	WHERE r.year <= "' + queryYear + '" AND a1.auth_name CONTAINS "' + queryString + '"\
     RETURN a1.auth_name AS name1, a2.auth_name AS name2, ID(a1) AS id1, ID(a2) AS id2, \
 	a1.auth_papers AS paper1, a2.auth_papers AS paper2, \
 	a1.degree_centrality AS deg1, a2.degree_centrality AS deg2, \
@@ -30,29 +30,17 @@ function searchYear(queryYear) {
 	a1.closeness_centrality AS clo1, a2.closeness_centrality AS clo2, \
 	a1.eigenvector_centrality AS eig1, a2.eigenvector_centrality AS eig2, \
 	a1.louvain_community AS lou1, a2.louvain_community AS lou2, \
+	a1.leiden_community AS lei1, a2.leiden_community AS lei2, \
 	a1.aff_id AS afid1, a2.aff_id AS afid2 \
+	ORDER BY a1.' + centralityLimit + ' DESC, a2.' + centralityLimit + ' DESC \
     LIMIT $limit'
-	
+		
 	return generateNodesandEdges(cypher_string);
 }
 
-function searchAuthors(queryString) {
-    cypher_string = 'MATCH (a1:Author)-[r:COAUTHORED_WITH]->(a2:Author) \
-	WHERE a1.auth_name CONTAINS "' + queryString + '"\
-    RETURN a1.auth_name AS name1, a2.auth_name AS name2, ID(a1) AS id1, ID(a2) AS id2, \
-	a1.auth_papers AS paper1, a2.auth_papers AS paper2, \
-	a1.degree_centrality AS deg1, a2.degree_centrality AS deg2, \
-	a1.betweenness_centrality AS bet1, a2.betweenness_centrality AS bet2, \
-	a1.closeness_centrality AS clo1, a2.closeness_centrality AS clo2, \
-	a1.eigenvector_centrality AS eig1, a2.eigenvector_centrality AS eig2, \
-	a1.louvain_community AS lou1, a2.louvain_community AS lou2, \
-	a1.aff_id AS afid1, a2.aff_id AS afid2 \
-    LIMIT $limit'
+function getGraph(centralityLimit) {	
+	console.log(centralityLimit)
 	
-	return generateNodesandEdges(cypher_string);
-}
-
-function getGraph() {	
 	cypher_string = "MATCH (a1:Author)-[r:COAUTHORED_WITH]->(a2:Author) \
     RETURN a1.auth_name AS name1, a2.auth_name AS name2, ID(a1) AS id1, ID(a2) AS id2, \
 	a1.auth_papers AS paper1, a2.auth_papers AS paper2, \
@@ -61,7 +49,9 @@ function getGraph() {
 	a1.closeness_centrality AS clo1, a2.closeness_centrality AS clo2, \
 	a1.eigenvector_centrality AS eig1, a2.eigenvector_centrality AS eig2, \
 	a1.louvain_community AS lou1, a2.louvain_community AS lou2, \
+    a1.leiden_community AS lei1, a2.leiden_community AS lei2, \
 	a1.aff_id AS afid1, a2.aff_id AS afid2 \
+	ORDER BY a1." + centralityLimit + " DESC, a2." + centralityLimit + " DESC \
     LIMIT $limit"
 	
 	return generateNodesandEdges(cypher_string);
@@ -83,7 +73,7 @@ function generateNodesandEdges(cypher_string){
 		   nodes.push({id: res.get('id1').low, name: res.get('name1'), label: 'author',
 					   p_count: res.get('paper1'), afid: res.get('afid1'),
 					   d_cen: res.get('deg1'), b_cen: res.get('bet1'), c_cen: res.get('clo1'), 
-					   e_cen: res.get('eig1'), l_com: res.get('lou1')});
+					   e_cen: res.get('eig1'), l_com: res.get('lou1'), le_com: res.get('lei1')});
 		   names.push(res.get('name1'));
 		}
 		if (!names.includes(res.get('name2'))) {
@@ -92,7 +82,7 @@ function generateNodesandEdges(cypher_string){
 		   nodes.push({id: res.get('id2').low, name: res.get('name2'), label: 'author',
 					   p_count: res.get('paper2'), afid: res.get('afid2'),
 					   d_cen: res.get('deg2'), b_cen: res.get('bet2'), c_cen: res.get('clo2'), 
-					   e_cen: res.get('eig2'), l_com: res.get('lou2')});
+					   e_cen: res.get('eig2'), l_com: res.get('lou2'), le_com: res.get('lei2')});
 		   names.push(res.get('name2'));
 		}
 		
@@ -121,6 +111,5 @@ function generateNodesandEdges(cypher_string){
     });
 }
 
-exports.searchAuthors = searchAuthors;
-exports.searchYear = searchYear;
+exports.search = search;
 exports.getGraph = getGraph;
