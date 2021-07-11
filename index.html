@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<title>CollaboVis</title>
-	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <title>CollaboVis</title>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/my.css">
     <link rel="stylesheet" type="text/css" href="css/all.css">
     <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
@@ -10,10 +11,12 @@
     <script type="text/javascript" src="js/popper.min.js"></script>
     <script type="text/javascript" src="js/jquery-3.3.1.slim.min.js"></script>
     <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
+	<script src="https://d3js.org/colorbrewer.v1.min.js"></script>
     <!-- for sweet alert boxes (replacement for norm js pop up) -->
     <script src="sweetalert2.all.min.js"></script>
     <script src="http://d3js.org/d3.v2.min.js?2.9.3"></script>
-	<!--script src="https://d3js.org/d3.v6.js"></script-->
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom/dist/panzoom.min.js"></script>
+    <!--script src="https://d3js.org/d3.v6.js"></script-->
     <script src="lib/browser/neo4j-web.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/promise-polyfill"></script>
     <link rel="icon" href="https://cdn.discordapp.com/attachments/821762884668358657/836516893820452894/collabo-icon.png">
@@ -32,7 +35,6 @@
     }
 
     /*fix for navbar right side dropdown*/
-	
     </style>
 </head>
 
@@ -42,7 +44,7 @@
         <div>
             <!-- Title -->
             <section class="col-xl-12">
-                <div class="sticky-top" style="background-color: #0D3F72;">
+                <div class="sticky-top" style="background-color: #0D3F72; margin-left:-20px!important;">
                     <h2 class="secondary-heading roboto text-white col-xl-3">
                         COLLABOVIS
                     </h2>
@@ -58,166 +60,190 @@
                         </li>
                     </ul>
                 </div>
-                    <div class="tab-content card pt-5" id="myTabContentMD">
-                        <div class="tab-pane fade show active" id="home-md" role="tabpanel" aria-labelledby="home-tab-md">
-                            <div class="row">
-                                <div class="vertical-menu col-3">
-                                    <a href="#" class="active">Authors</a>
-                                    <a href="#">Affiliations</a>
-                                    <a href="#">Communities</a>
-                                    <a href="#">Topics</a>
-									<div id = "details">
-									</div>
-                                </div>
-								<div id="graph" class="center col flex-grow-1" style="height: 850px;">
-                                    <div class="container">
-                                        <div class="row justify-content-center">
-                                            <div class="col-12 col-sm-10 col-sm-8">
-                                                <form class="card card-sm">
-                                                    <div class="card-body row no-gutters align-items-center">
-                                                        <div class="col-auto">
-                                                            <i class="fas fa-search h5 text-body"></i>
-                                                        </div>
-                                                        <!--end of col-->
-                                                        <div class="col">
-                                                            <input class="form-control form-control-md form-control-borderless" type="search" placeholder="Search authors">
-                                                        </div>
-                                                        <!--end of col-->
-                                                        <div class="col-auto">
-                                                            <button class="btn btn-md btn-success" type="submit" style="background: #0d3f72!important;">Search</button>
-                                                        </div>
-                                                        <!--end of col-->
-                                                    </div>
-                                                </form>
-                                            </div>
-                                            <!--end of col-->
-                                        </div>
-                                    </div>
-                                    <div class="slidecontainer">
-                                        <input type="range" min="1960" max="2020" value="2010" class="slider" id="myRange">
-                                        <p class="font-weight-bold">Year: <span id="demo"></span></p>
-                                </div>
-                                </div>
-								
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="profile-md" role="tabpanel" aria-labelledby="profile-tab-md">
-							<h4 class="lexenddeca text-center center mb-3" style="color: #0d3f72!important;">This dataset has been downloaded on the Scopus website. It includes publications from the year 1960 - 2020. A cleaned version of the dataset in .csv format is available on github, and the graphs in each section show how it looks like. </h4>
-                            <div class="container">
-                                <div class="row">
-                <div class="col-xs-12 ">
-                  <nav>
-                    <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
-                      <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">✍Author Statistics</a>
-                      <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-profile" role="tab" aria-controls="nav-profile" aria-selected="false">📃Paper Statistics</a>
-                      <a class="nav-item nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">🏫Affiliation Statistics</a>
-                      
-                    </div>
-                  </nav>
-                  <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent">
-                    <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                      <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Authors with the Most Publications</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844108370390810635/Top_10.png" class = "img-responsive center mt-5" width = "50%" style="width: 50%!important;">
-
-                    <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Authors with the Most Citations</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844116866393047060/top_10_citations.png" class = "img-responsive center mt-5" width = "50%" >
-
-                        <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 5 Authors with the Most Papers</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844117787709800448/top_5_author_connections.png" class = "img-responsive center mt-5" width = "50%" >
-
-                    </div>
-                    <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-                      <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Popular Publication Type</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844123837175169024/most_popular_publication_type.png" class = "img-responsive center mt-5" width = "50%" >
-
-                      <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Years with Most Publications</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844124236305268736/years_with_most_publications.png" class = "img-responsive center mt-5" width = "50%" >
-
-                        <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top Publication Venues</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844207409412702218/top_publication_venues.png" class = "img-responsive center mt-5" width = "50%" >
-
-                         <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Cited Papers</h2>
-                        <img src="https://cdn.discordapp.com/attachments/844108116174045205/844125384416165918/most_cited_papers.png" class = "img-responsive center mt-5" width = "50%" style="width: 50%!important;">
-
-                    </div>
-                    <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
-                      <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Affiliations</h2>
-                        
-
-                    </div>
-                  </div>
-                
-                </div>
-              </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="contact-md" role="tabpanel" aria-labelledby="contact-tab-md">
-                            <h1 class="lexenddeca text-center" style="color: #0d3f72!important; text-decoration: underline;">About the Project</h1>
-                            <div class="row">
-                                <div class="col-6">
-                                    <img id='collabo-icon' class="ml-5" style="max-height: 100%!important; max-width: 100%!important; margin-left: 100px!important;" src="img/collabo-icon.png" />
-                                </div>
-                                <div class="col-5 mr-5" style="margin-top:100px!important;">
-                                    <p class="roboto-regular text-justify mr-5">
-                                        <tab>The project CollaboVis primarily focuses on understanding the relationship between the growth of research communities and the diversity of topics over time. We have collected from the Scopus database the publications of researchers of all universities in the Philippines from 1960 to 2020, create a weighted and temporal co-authorship network, and identify the communities for different time periods.
+                <div class="tab-content card pt-5" id="myTabContentMD">
+                    <div class="tab-pane fade show active" id="home-md" role="tabpanel" aria-labelledby="home-tab-md">
+                        <div class="sidenav mt-3" style="margin-top: 30px!important;">
+                            <a id="authors-tab" href="#" class="active" >Authors</a>
+                            <a id="affiliations-tab" href="#" >Affiliations</a>
+                            <a id="communities-tab" href="#">Communities</a>
+                            <div class="card text-center mt-3 ml-4 mr-3 mb-5">
+                                <div class="card-header roboto-regular font-weight-bold">Author Details and Network Measures</div>
+                                <div class="card-body">
+                                    <p class="card-text text-dark text-left" id="details">Click on a node to see more details!
                                     </p>
                                 </div>
+                                <div class="card-footer text-muted"></div>
                             </div>
-                            <h1 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Meet the Team</h1>
-                            <div class="row" style="margin-left: 200px; margin-right:100px; margin-top:50px; margin-bottom: 100px;">
-                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
-                                    <img src="img/team-member.png" class="card-img-top team" alt="...">
-                                    <div class="card-body">
-                                        <p class="card-text roboto-regular text-center">Jerald Ang</p>
+                        </div>
+                        <div class="main">
+                            <div class="container">
+                                <div class="row justify-content-center">
+                                    <div class="col-12 col-sm-10 col-sm-8">
+                                        <form id="search-form" class="card card-sm  mt-0">
+                                            <div class="card-body row no-gutters align-items-center">
+                                                <div class="col-auto">
+                                                    <i class="fas fa-search h5 text-body"></i>
+                                                </div>
+                                                <!--end of col-->
+                                                <div class="col">
+                                                    <input id="search-input" class="form-control form-control-md form-control-borderless" type="search" placeholder="Search authors">
+                                                </div>
+                                                <!--end of col-->
+                                                <div class="col-auto">
+                                                    <button class="btn btn-md btn-success" type="submit" style="background: #0d3f72!important;">Search</button>
+                                                </div>
+                                                <!--end of col-->
+                                            </div>
+                                        </form>
                                     </div>
+                                    <!--end of col-->
                                 </div>
-                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
-                                    <img src="img/team-member.png" class="card-img-top team" alt="...">
-                                    <div class="card-body">
-                                        <p class="card-text roboto-regular text-center">Marjorie Lua</p>
-                                    </div>
+                            </div>
+                        </div>
+                        <div class="main">
+                            <div id="panzoom">
+                                <div id="graph" class="center col flex-grow-1" style="height: 850px;">
                                 </div>
-                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
-                                    <img src="img/team-member.png" class="card-img-top team" alt="...">
-                                    <div class="card-body">
-                                        <p class="card-text roboto-regular text-center">Dyonne Macalino</p>
-                                    </div>
-                                </div>
-                                <div class="card col-2" style="width: 18rem; margin-left:50px;">
-                                    <img src="img/team-member.png" class="card-img-top team" alt="...">
-                                    <div class="card-body">
-                                        <p class="card-text roboto-regular text-center">Jomari Morales</p>
+                            </div>
+                        </div>
+                        <div class="main">
+                            <div class="container">
+                                <div class="row mt-5">
+                                    <div class="slidecontainer">
+                                        <input type="range" min="1960" max="2020" value="2020" class="slider" id="myRange">
+                                        <p class="font-weight-bold text-center">Year: <span id="demo"></span></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-					
+                    <div class="tab-pane fade" id="profile-md" role="tabpanel" aria-labelledby="profile-tab-md">
+                        <h4 class="lexenddeca text-center center mt-5 mb-3" style="color: #0d3f72!important;">This dataset has been downloaded on the Scopus website. It includes publications from the year 1960 - 2020. A cleaned version of the dataset in .csv format is available on github, and the graphs in each section show how it looks like. </h4>
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-xs-12 ">
+                                    <nav>
+                                        <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
+                                            <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">✍Author Statistics</a>
+                                            <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-profile" role="tab" aria-controls="nav-profile" aria-selected="false">📃Paper Statistics</a>
+                                            <a class="nav-item nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">🏫Affiliation Statistics</a>
+                                        </div>
+                                    </nav>
+                                    <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent">
+                                        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 5 Authors with the Most Papers</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844117787709800448/top_5_author_connections.png" class="img-responsive center mt-5" width="50%">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Authors with the Most Publications</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844108370390810635/Top_10.png" class="img-responsive center mt-5" width="50%" style="width: 50%!important;">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Authors with the Most Citations</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844116866393047060/top_10_citations.png" class="img-responsive center mt-5" width="50%">
+                                        </div>
+                                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Popular Publication Type</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844123837175169024/most_popular_publication_type.png" class="img-responsive center mt-5" width="50%">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Years with Most Publications</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844209900086624326/years_with_most_publications.png" class="img-responsive center mt-5" width="50%">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top Publication Venues</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844575144940535888/top_publication_venues.png" class="img-responsive center mt-5" width="50%">
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Cited Papers</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/812203751154122784/844218886056706058/most_cited_papers.png" class="img-responsive center mt-2" width="50%" style="width: 80%!important;">
+                                        </div>
+                                        <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
+                                            
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Most Number of Authors in Philippine University Affiliations </h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844577241337036810/most_number_authors_in_ph_affil.png" class="img-responsive center mt-2" width="50%" style="width: 80%!important;">
+
+                                            <h2 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Top 10 Philippine University Affiliations Based on Published Papers</h2>
+                                            <img src="https://cdn.discordapp.com/attachments/844108116174045205/844577422401601606/top_10_ph_affil.png" class="img-responsive center mt-5" width="50%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="contact-md" role="tabpanel" aria-labelledby="contact-tab-md">
+                        <h1 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: underline;">About the Project</h1>
+                        <div class="row">
+                            <div class="col-6">
+                                <img id='collabo-icon' class="ml-5" style="max-height: 100%!important; max-width: 100%!important; margin-left: 100px!important;" src="img/collabo-icon.png" />
+                            </div>
+                            <div class="col-5 mr-5" style="margin-top:100px!important;">
+                                <h5 class="roboto-regular text-justify mr-5">
+                                    <tab>The project CollaboVis primarily focuses on understanding the relationship between the growth of research communities and the diversity of topics over time. We have collected from the Scopus database the publications of researchers of all universities in the Philippines from 1960 to 2020, create a weighted and temporal co-authorship network, and identify the communities for different time periods.
+                                </h5>
+                            </div>
+                        </div>
+                        <h1 class="lexenddeca text-center mt-5" style="color: #0d3f72!important; text-decoration: none;">Meet the Team</h1>
+                        <div class="row" style="margin-left: 200px; margin-right:100px; margin-top:50px; margin-bottom: 100px;">
+                            <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                <img src="img/team-member.png" class="card-img-top team" alt="...">
+                                <div class="card-body">
+                                    <p class="card-text roboto-regular text-center">Jerald Ang</p>
+                                </div>
+                            </div>
+                            <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                <img src="img/team-member.png" class="card-img-top team" alt="...">
+                                <div class="card-body">
+                                    <p class="card-text roboto-regular text-center">Marjorie Lua</p>
+                                </div>
+                            </div>
+                            <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                <img src="img/team-member.png" class="card-img-top team" alt="...">
+                                <div class="card-body">
+                                    <p class="card-text roboto-regular text-center">Dyonne Macalino</p>
+                                </div>
+                            </div>
+                            <div class="card col-2" style="width: 18rem; margin-left:50px;">
+                                <img src="img/team-member.png" class="card-img-top team" alt="...">
+                                <div class="card-body">
+                                    <p class="card-text roboto-regular text-center">Jomari Morales</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </section>
-            <!-- Section: Live preview -->
         </div>
-        <!-- Grid column -->
+        </section>
+        <!-- Section: Live preview -->
     </div>
-    
+    <!-- Grid column -->
+    </div>
     <!--<iframe src="audio/silence.mp3" allow="autoplay" id="audio" style="display:none"></iframe>
     <audio id="player" autoplay loop>
         <source src="./audio/krusty_krab_remix.mp3" type="audio/mp3">
     </audio>-->
 </body>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
-    </script>
-    <script src="/path/to/bootstrap-show-password.js"></script>
-	
-	
-	<style type="text/css">
-		.node { stroke: #222; stroke-width: 1.5px; }
-		.node.actor { fill: #FF5349; }
-		.node.movie { fill: #FF5349; }
-		.link { stroke: #999; stroke-opacity: .6; stroke-width: 1px; }
-		svg {overflow: scroll}
-	</style>
-	<script type="text/javascript" src="./js/main.js"></script>
-	<script type="text/javascript" src="./js/login.js"></script>
-	<script type="text/javascript" src="./js/neo4j-web.min.js"></script>
+</script>
+<script src="/path/to/bootstrap-show-password.js"></script>
+<style type="text/css">
+.node {
+    stroke: #222;
+    stroke-width: 1.5px;
+}
+
+.node.actor {
+    fill: #FF5349;
+}
+
+.node.movie {
+    fill: #FF5349;
+}
+
+.link {
+    stroke: #999;
+    stroke-opacity: .6;
+    stroke-width: 1px;
+}
+
+svg {
+    overflow: scroll
+}
+</style>
+<script type="text/javascript" src="./js/main.js"></script>
+<script type="text/javascript" src="./js/login.js"></script>
+<script type="text/javascript" src="./js/neo4j-web.min.js"></script>
+<script type="text/javascript">
+    
+</script>
 </html>
